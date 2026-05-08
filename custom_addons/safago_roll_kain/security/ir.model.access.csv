@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_safago_roll_kain_user,safago.roll.kain.user,model_safago_roll_kain,base.group_user,1,1,1,1

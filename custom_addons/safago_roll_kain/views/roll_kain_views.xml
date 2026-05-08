@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_safago_roll_kain" model="ir.actions.act_window">
+        <field name="name">Daftar Roll Kain</field>
+        <field name="res_model">safago.roll.kain</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_safago_root" name="SAFAGO" sequence="10"/>
+    
+    <menuitem id="menu_safago_roll_kain" 
+              name="Roll Kain" 
+              parent="menu_safago_root" 
+              action="action_safago_roll_kain" 
+              sequence="10"/>
+</odoo>

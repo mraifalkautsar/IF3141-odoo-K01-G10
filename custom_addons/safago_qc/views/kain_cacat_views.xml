@@ -1,0 +1,56 @@
+<odoo>
+    <record id="view_safago_kain_cacat_form" model="ir.ui.view">
+        <field name="name">safago.kain.cacat.form</field>
+        <field name="model">safago.kain.cacat</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="foto_cacat" widget="image" class="oe_avatar" options='{"preview_image": "foto_cacat"}'/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="spk_id"/>
+                            <field name="roll_kain_id"/>
+                        </group>
+                        <group>
+                            <field name="staf_id"/>
+                            <field name="jumlah_cacat_yard"/>
+                        </group>
+                    </group>
+                    <group string="Informasi Tambahan">
+                        <field name="alasan" placeholder="Jelaskan detail kerusakan di sini..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_safago_kain_cacat_tree" model="ir.ui.view">
+        <field name="name">safago.kain.cacat.tree</field>
+        <field name="model">safago.kain.cacat</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="spk_id"/>
+                <field name="roll_kain_id"/>
+                <field name="jumlah_cacat_yard"/>
+                <field name="staf_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_safago_kain_cacat" model="ir.actions.act_window">
+        <field name="name">Laporan Kain Cacat</field>
+        <field name="res_model">safago.kain.cacat</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_safago_qc_root" name="QC Kain" parent="safago_roll_kain.menu_safago_root" sequence="20"
+              groups="safago_qc.group_safago_qc_user,safago_qc.group_safago_qc_manager"/>
+    <menuitem id="menu_kain_cacat" name="Kain Cacat" parent="menu_safago_qc_root" action="action_safago_kain_cacat"
+              groups="safago_qc.group_safago_qc_user,safago_qc.group_safago_qc_manager"/>
+</odoo>

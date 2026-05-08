@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_safago_qc_user" model="res.groups">
+        <field name="name">SAFAGO QC User</field>
+        <field name="category_id" ref="base.module_category_inventory"/>
+        <field name="implied_ids" eval="[
+            (4, ref('stock.group_stock_user')),
+            (4, ref('mrp.group_mrp_user'))
+        ]"/>
+    </record>
+
+    <record id="group_safago_qc_manager" model="res.groups">
+        <field name="name">SAFAGO QC Manager</field>
+        <field name="category_id" ref="base.module_category_inventory"/>
+        <field name="implied_ids" eval="[
+            (4, ref('safago_qc.group_safago_qc_user')),
+            (4, ref('stock.group_stock_manager')),
+            (4, ref('mrp.group_mrp_manager'))
+        ]"/>
+    </record>
+
+    <record id="base.user_admin" model="res.users">
+        <field name="groups_id" eval="[(4, ref('safago_qc.group_safago_qc_manager'))]"/>
+    </record>
+
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('safago_qc.group_safago_qc_manager'))]"/>
+    </record>
+</odoo>
