@@ -5,6 +5,7 @@ from odoo.exceptions import ValidationError
 import requests
 import logging
 import base64
+import os
 _logger = logging.getLogger(__name__)
 
 class SafagoKainCacat(models.Model):
@@ -12,9 +13,9 @@ class SafagoKainCacat(models.Model):
     _description = 'Laporan Kain Cacat'
 
     name = fields.Char(string='Nomor Laporan', required=True, default='New')
-    spk_id = fields.Many2one('mrp.production', string='Referensi SPK', required=True)
+    spk_id = fields.Many2one('safago.spk', string='Referensi SPK', required=True)
     roll_kain_id = fields.Many2one('safago.roll.kain', string='Roll Kain', required=True)
-    staf_id = fields.Many2one('hr.employee', string='Staf Pemeriksa', required=True)
+    staf_id = fields.Many2one('safago.staf', string='Staf Pemeriksa', required=True)
     jumlah_cacat_yard = fields.Float(string='Jumlah Cacat (Yard)', required=True)
     alasan = fields.Text(string='Deskripsi Kerusakan')
     foto_cacat = fields.Binary(string='Foto Bukti Cacat')
@@ -107,11 +108,11 @@ class SafagoKainCacat(models.Model):
         target_roll = roll or self.roll_kain_id
         if not target_roll or not quantity:
             return
-        target_roll.write({'sisa_stok_yard': target_roll.sisa_stok_yard - quantity})
+        target_roll.sudo().write({'sisa_stok_yard': target_roll.sisa_stok_yard - quantity})
 
     def _send_telegram_notification(self):
         self.ensure_one()
-        chat_id = self.staf_id.telegram_id
+        chat_id = os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
         
         if not chat_id:
             return

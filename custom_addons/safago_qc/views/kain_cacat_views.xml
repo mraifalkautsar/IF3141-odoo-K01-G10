@@ -8,7 +8,7 @@
                     <field name="foto_cacat" widget="image" class="oe_avatar" options='{"preview_image": "foto_cacat"}'/>
                     <div class="oe_title">
                         <h1>
-                            <field name="name"/>
+                            <field name="name" readonly="1"/>
                         </h1>
                     </div>
                     <group>
@@ -49,8 +49,15 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem id="menu_safago_qc_root" name="QC Kain" parent="safago_roll_kain.menu_safago_root" sequence="20"
-              groups="safago_qc.group_safago_qc_user,safago_qc.group_safago_qc_manager"/>
-    <menuitem id="menu_kain_cacat" name="Kain Cacat" parent="menu_safago_qc_root" action="action_safago_kain_cacat"
-              groups="safago_qc.group_safago_qc_user,safago_qc.group_safago_qc_manager"/>
+    <menuitem id="menu_safago_qc_root" 
+          name="QC Kain" 
+          parent="safago_roll_kain.menu_safago_root" 
+          sequence="20"
+          groups="group_safago_penjahit,group_safago_qc_user,group_safago_qc_manager"/>
+
+    <menuitem id="menu_kain_cacat" 
+          name="Kain Cacat" 
+          parent="menu_safago_qc_root" 
+          action="action_safago_kain_cacat"
+          groups="group_safago_penjahit,group_safago_qc_user,group_safago_qc_manager"/>
 </odoo>

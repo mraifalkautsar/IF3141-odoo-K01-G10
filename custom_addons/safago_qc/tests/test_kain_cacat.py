@@ -15,10 +15,6 @@ class TestSafagoKainCacat(TransactionCase):
         cls.roll_model = cls.env['safago.roll.kain']
         cls.report_model = cls.env['safago.kain.cacat']
 
-        cls.product = cls.env['product.product'].create({
-            'name': 'Baju SAFAGO Test',
-            'type': 'product',
-        })
         cls.spk_roll = cls.roll_model.create({
             'name': 'ROLL-SPK',
             'jenis_kain': 'Katun',
@@ -31,14 +27,12 @@ class TestSafagoKainCacat(TransactionCase):
             'warna': 'Putih',
             'sisa_stok_yard': 10.0,
         })
-        cls.spk = cls.env['mrp.production'].create({
+        cls.spk = cls.env['safago.spk'].create({
             'name': 'SPK-TEST',
-            'product_id': cls.product.id,
-            'product_uom_id': cls.env.ref('uom.product_uom_unit').id,
-            'product_qty': 1.0,
             'roll_kain_id': cls.spk_roll.id,
         })
-        cls.employee = cls.env['hr.employee'].create({
+
+        cls.employee = cls.env['safago.staf'].create({
             'name': 'Staf QC Test',
             'telegram_id': '12345',
         })

@@ -6,7 +6,7 @@
     'category': 'Inventory',
     'author': 'G10',
     'license': 'LGPL-3',
-    'depends': ['stock'],
+    'depends': ['base'],
     'data': [
         'security/ir.model.access.csv',
         'views/roll_kain_views.xml'

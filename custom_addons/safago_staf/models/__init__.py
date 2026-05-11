@@ -1,1 +1,1 @@
-from . import hr_employee
+from . import safago_staf
