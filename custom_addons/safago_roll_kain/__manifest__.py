@@ -9,7 +9,10 @@
     'depends': ['base'],
     'data': [
         'security/ir.model.access.csv',
-        'views/roll_kain_views.xml'
+        'data/roll_kain_sequence.xml',
+        'views/roll_kain_views.xml',
+        'report/roll_kain_barcode_report.xml',
+        'report/roll_kain_barcode_templates.xml',
     ],
     'installable': True,
     'application': True,

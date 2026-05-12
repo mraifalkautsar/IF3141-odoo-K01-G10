@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_roll_kain_barcode_label">
+        <t t-call="web.html_container">
+            <div class="page" style="padding:4mm;">
+                <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+                    <t t-foreach="range(0, len(docs), 4)" t-as="i">
+                        <tr>
+                            <t t-foreach="docs[i:i+4]" t-as="doc">
+                                <td style="width:25%; text-align:center; vertical-align:top; padding:2mm;">
+                                    <t t-if="doc.qr_code_image">
+                                        <img t-att-src="image_data_uri(doc.qr_code_image)"
+                                             style="width:36mm; height:36mm;"/>
+                                    </t>
+                                    <div style="font-size:7pt; font-weight:bold; margin-top:1mm;">
+                                        <t t-esc="doc.name"/>
+                                    </div>
+                                </td>
+                            </t>
+                        </tr>
+                    </t>
+                </table>
+            </div>
+        </t>
+    </template>
+</odoo>

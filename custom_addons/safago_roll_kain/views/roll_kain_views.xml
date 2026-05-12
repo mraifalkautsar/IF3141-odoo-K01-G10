@@ -1,5 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_safago_roll_kain_tree" model="ir.ui.view">
+        <field name="name">safago.roll.kain.tree</field>
+        <field name="model">safago.roll.kain</field>
+        <field name="arch" type="xml">
+            <tree string="Daftar Roll Kain">
+                <field name="name"/>
+                <field name="jenis_kain"/>
+                <field name="warna"/>
+                <field name="sisa_stok_yard"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_safago_roll_kain_form" model="ir.ui.view">
+        <field name="name">safago.roll.kain.form</field>
+        <field name="model">safago.roll.kain</field>
+        <field name="arch" type="xml">
+            <form string="Roll Kain">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <div style="display:flex; gap:32px; align-items:flex-start;">
+                        <div style="flex:1;">
+                            <group string="Informasi Kain">
+                                <field name="jenis_kain"/>
+                                <field name="warna"/>
+                                <field name="sisa_stok_yard"/>
+                            </group>
+                        </div>
+                        <div style="flex:0 0 auto; text-align:center;" invisible="name == 'New'">
+                            <field name="qr_code_image"
+                                   widget="image"
+                                   options="{'size': [200, 200]}"
+                                   readonly="1"
+                                   nolabel="1"/>
+                            <div style="margin-top:8px;">
+                                <button name="action_print_barcode_label"
+                                        type="object"
+                                        string="Cetak QR Code"
+                                        class="btn btn-secondary"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <button name="action_save_and_reload"
+                                type="object"
+                                string="Simpan"
+                                class="btn btn-primary"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="action_safago_roll_kain" model="ir.actions.act_window">
         <field name="name">Daftar Roll Kain</field>
         <field name="res_model">safago.roll.kain</field>
@@ -7,10 +67,10 @@
     </record>
 
     <menuitem id="menu_safago_root" name="SAFAGO" sequence="10"/>
-    
-    <menuitem id="menu_safago_roll_kain" 
-              name="Roll Kain" 
-              parent="menu_safago_root" 
-              action="action_safago_roll_kain" 
+
+    <menuitem id="menu_safago_roll_kain"
+              name="Roll Kain"
+              parent="menu_safago_root"
+              action="action_safago_roll_kain"
               sequence="10"/>
 </odoo>
