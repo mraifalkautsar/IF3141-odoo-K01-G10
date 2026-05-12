@@ -5,10 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN_API_ODOO = 'TokenRahasia123'
-URL_ODOO_MULAI_PRODUKSI = 'http://localhost:8069/api/safago/mulai_produksi'
-URL_ODOO_SELESAI_PRODUKSI = 'http://localhost:8069/api/safago/selesai_produksi'
-
 bot = telebot.TeleBot(os.getenv('SAFAGO_TELEGRAM_BOT_TOKEN'))
 
 @bot.message_handler(commands=['start'])
@@ -17,18 +13,18 @@ def send_welcome(message):
     print(f"BINGO! ID Obrolan ruangan ini adalah: {message.chat.id}")
     
     bot.reply_to(message, "Sistem SAFAGO siap. Silakan pindai QR Code atau ketik ID Roll Kain (contoh: RK-001) untuk memulai produksi.")
-    
+
 @bot.message_handler(commands=['selesai'])
 def proses_selesai_produksi(message):
     teks_mentah = message.text
     # Gunakan .strip() untuk membuang spasi tak terlihat di akhir teks
     id_roll_lain = teks_mentah.replace('/selesai ', '').strip()
     
-    url_target = URL_ODOO_SELESAI_PRODUKSI
+    url_target = os.getenv('URL_ODOO_SELESAI_PRODUKSI')
     
     header = {
         'Content-Type': 'application/json',
-        'Authorization': TOKEN_API_ODOO
+        'Authorization': os.getenv('TOKEN_API_ODOO')
     }
     payload = {
         "params": {
@@ -83,7 +79,7 @@ def proses_scan_qr(message):
     }
     
     try:
-        response = requests.post(URL_ODOO_MULAI_PRODUKSI, json=payload, headers=headers)
+        response = requests.post(os.getenv('URL_ODOO_MULAI_PRODUKSI'), json=payload, headers=headers)
         
         try:
             data = response.json()
