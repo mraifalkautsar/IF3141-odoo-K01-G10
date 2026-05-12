@@ -23,16 +23,16 @@ class SafagoKainCacat(models.Model):
     @api.constrains('jumlah_cacat_yard', 'roll_kain_id', 'spk_id')
     def _check_laporan_cacat(self):
         for record in self:
+            if record.spk_id and record.spk_id.state != 'proses':
+                raise ValidationError('Pelaporan kain cacat hanya dapat dilakukan pada SPK yang sedang dalam status "Proses".')
             if record.jumlah_cacat_yard <= 0:
-                raise ValidationError(_('Jumlah cacat harus lebih besar dari 0 yard.'))
-            if (
-                record.spk_id
-                and record.roll_kain_id
-                and record.spk_id.roll_kain_id
-                and record.spk_id.roll_kain_id != record.roll_kain_id
-            ):
-                raise ValidationError(_('Roll kain laporan harus sama dengan roll kain pada SPK.'))
-
+                raise ValidationError('Jumlah cacat harus lebih besar dari 0 yard.')
+            if record.spk_id and record.roll_kain_id and record.spk_id.roll_kain_id != record.roll_kain_id:
+                raise ValidationError(
+                    f'Roll kain yang Anda pilih ({record.roll_kain_id.name}) tidak cocok dengan roll kain pada dokumen SPK ({record.spk_id.roll_kain_id.name}). '
+                    'Silakan periksa kembali, Anda mungkin tidak sengaja memilih SPK yang sudah berstatus Selesai atau Dibatalkan.'
+                )
+            
     @api.model_create_multi
     def create(self, vals_list):
         records = self.browse()

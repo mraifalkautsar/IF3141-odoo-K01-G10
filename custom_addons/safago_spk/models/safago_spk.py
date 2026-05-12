@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 class SafagoSpk(models.Model):
     _name = 'safago.spk'
@@ -38,4 +39,29 @@ class SafagoSpk(models.Model):
             record.write({'state' : 'batal'})
             sisa_baru = record.roll_kain_id.sisa_stok_yard + record.jumlah_pemakaian_yard
             record.roll_kain_id.sudo().write({'sisa_stok_yard': sisa_baru})
-            
+    
+    @api.constrains('jumlah_pemakaian_yard', 'roll_kain_id')
+    def _validasi_ketersediaan_stok(self):
+        for record in self:
+            roll = record.roll_kain_id
+            if roll and record.jumlah_pemakaian_yard > roll.sisa_stok_yard:
+                raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
+
+    def action_confirm(self):
+        res = super(SafagoSpk, self).action_confirm()
+        if self.state == 'proses':
+            for record in self:
+                roll = record.roll_kain_id
+                if roll and record.jumlah_pemakaian_yard > roll.sisa_stok_yard:
+                    raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
+        return res
+
+    def write(self, vals):
+        res = super(SafagoSpk, self).write(vals)
+        if self.state == 'proses':
+            for record in self:
+                roll = record.roll_kain_id
+                if roll and record.jumlah_pemakaian_yard > roll.sisa_stok_yard:
+                    raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
+        return res
+
