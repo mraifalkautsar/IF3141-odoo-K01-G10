@@ -31,6 +31,7 @@ class TestSafagoKainCacat(TransactionCase):
             'name': 'SPK-TEST',
             'roll_kain_id': cls.spk_roll.id,
         })
+        cls.spk.write({'state': 'proses'})
 
         cls.employee = cls.env['safago.staf'].create({
             'name': 'Staf QC Test',
