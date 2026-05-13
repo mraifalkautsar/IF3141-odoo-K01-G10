@@ -17,7 +17,9 @@
                 <field name="name"/>
                 <field name="roll_kain_id"/>
                 <field name="tanggal_mulai"/>
+                <field name="deadline_selesai"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'selesai'"/>
+                <field name="is_overdue"/>
                 <field name="jumlah_pemakaian_yard"/>
             </tree>
         </field>
@@ -39,8 +41,13 @@
                         <field name="name"/>
                         <field name="roll_kain_id"/>
                         <field name="tanggal_mulai"/>
+                        <field name="deadline_selesai"/>
                         <field name="state"/>
                         <field name="jumlah_pemakaian_yard" readonly="state != 'draft'"/>
+                        <field name="is_overdue" readonly="1"/>
+                        <field name="overdue_hours" readonly="1"/>
+                        <field name="last_alert_at" readonly="1"/>
+                        <field name="alert_count" readonly="1"/>
                     </group>
                 </sheet>
             </form>

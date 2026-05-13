@@ -1,5 +1,13 @@
+import logging
+import os
+from datetime import timedelta
+
+import requests
+
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+
+_logger = logging.getLogger(__name__)
 
 class SafagoSpk(models.Model):
     _name = 'safago.spk'
@@ -20,6 +28,12 @@ class SafagoSpk(models.Model):
     finished_at = fields.Datetime(readonly=True, copy=False)
     started_by_scan = fields.Boolean(default=False, copy=False)
     finished_by_scan = fields.Boolean(default=False, copy=False)
+
+    deadline_selesai = fields.Datetime(string='Deadline Selesai')
+    is_overdue = fields.Boolean(compute='_compute_overdue_status', store=True)
+    overdue_hours = fields.Float(compute='_compute_overdue_status', store=True)
+    last_alert_at = fields.Datetime(readonly=True, copy=False)
+    alert_count = fields.Integer(default=0, readonly=True, copy=False)
 
     def action_mulai_produksi_from_scan(self):
         for record in self:
@@ -54,6 +68,7 @@ class SafagoSpk(models.Model):
     def action_selesai_produksi(self):
         for record in self:
             record.write({'state' : 'selesai'})
+            record._mark_alert_resolved()
 
     def action_batal_produksi(self):
         for record in self:
@@ -86,3 +101,86 @@ class SafagoSpk(models.Model):
                     raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
         return res
 
+    @api.depends('deadline_selesai', 'state', 'finished_at')
+    def _compute_overdue_status(self):
+        now = fields.Datetime.now()
+        for record in self:
+            overdue = False
+            overdue_hours = 0.0
+            if record.state == 'proses' and record.deadline_selesai and not record.finished_at:
+                if now > record.deadline_selesai:
+                    overdue = True
+                    delta = now - record.deadline_selesai
+                    overdue_hours = delta.total_seconds() / 3600.0
+            record.is_overdue = overdue
+            record.overdue_hours = overdue_hours
+
+    def cron_check_overdue_spk(self):
+        overdue_spk = self.search([('is_overdue', '=', True)])
+        for record in overdue_spk:
+            if record._should_send_overdue_alert():
+                if record._send_overdue_telegram_alert():
+                    record._mark_alert_sent()
+
+    def _should_send_overdue_alert(self):
+        self.ensure_one()
+        if not self.is_overdue:
+            return False
+        if not self.last_alert_at:
+            return True
+        return fields.Datetime.now() - self.last_alert_at >= timedelta(minutes=30)
+
+    def _send_overdue_telegram_alert(self):
+        self.ensure_one()
+        token = (
+            self.env['ir.config_parameter'].sudo().get_param('safago_spk.telegram_bot_token')
+            or os.getenv('SAFAGO_TELEGRAM_BOT_TOKEN')
+        )
+        chat_id = (
+            self.env['ir.config_parameter'].sudo().get_param('safago_spk.telegram_chat_id')
+            or os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
+        )
+        token = token.strip() if token else ''
+        chat_id = str(chat_id).strip() if chat_id else ''
+
+        if not token or not chat_id:
+            _logger.info('Token/chat_id Telegram SPK belum dikonfigurasi.')
+            return False
+
+        message = (
+            '*ALERT SPK TERLAMBAT*\n\n'
+            f'*No. SPK:* {self.name}\n'
+            f'*Roll Kain:* {self.roll_kain_id.display_name}\n'
+            f'*Deadline:* {self.deadline_selesai}\n'
+            f'*Overdue:* {self.overdue_hours:.2f} jam'
+        )
+
+        url = f'https://api.telegram.org/bot{token}/sendMessage'
+        payload = {
+            'chat_id': chat_id,
+            'text': message,
+            'parse_mode': 'Markdown'
+        }
+
+        try:
+            response = requests.post(url, json=payload, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as error:
+            _logger.warning('Gagal mengirim alert SPK overdue: %s', error)
+            return False
+
+        return True
+
+    def _mark_alert_sent(self):
+        self.ensure_one()
+        self.write({
+            'last_alert_at': fields.Datetime.now(),
+            'alert_count': self.alert_count + 1,
+        })
+
+    def _mark_alert_resolved(self):
+        self.ensure_one()
+        self.write({
+            'last_alert_at': False,
+            'alert_count': 0,
+        })
