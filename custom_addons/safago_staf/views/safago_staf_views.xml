@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_safago_staf" model="ir.actions.act_window">
+        <field name="name">Data Staf</field>
+        <field name="res_model">safago.staf</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_safago_staf" 
+              name="Staf Lapangan" 
+              parent="safago_roll_kain.menu_safago_root" 
+              action="action_safago_staf" 
+              sequence="30"/>
+</odoo>

@@ -5,6 +5,7 @@
 .venv/
 venv/
 env/
+.env
 
 # Python cache / compiled files
 __pycache__/
@@ -19,3 +20,5 @@ __pycache__/
 # IDE / Editor
 .vscode/
 .idea/
+
+docs/

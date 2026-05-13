@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_roll_kain_barcode" model="ir.actions.report">
+        <field name="name">Label Barcode Roll Kain</field>
+        <field name="model">safago.roll.kain</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">safago_roll_kain.report_roll_kain_barcode_label</field>
+        <field name="report_file">safago_roll_kain.report_roll_kain_barcode_label</field>
+        <field name="binding_model_id" ref="model_safago_roll_kain"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+</odoo>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_safago_kain_cacat_penjahit,safago.kain.cacat.penjahit,model_safago_kain_cacat,group_safago_penjahit,1,1,1,0
+access_safago_kain_cacat_user,safago.kain.cacat.user,model_safago_kain_cacat,group_safago_qc_user,1,1,1,0
+access_safago_kain_cacat_manager,safago.kain.cacat.manager,model_safago_kain_cacat,group_safago_qc_manager,1,1,1,1

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_safago_spk" model="ir.actions.act_window">
+        <field name="name">Surat Perintah Kerja</field>
+        <field name="res_model">safago.spk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_safago_spk_root" name="SPK SAFAGO" sequence="10"/>
+    <menuitem id="menu_safago_spk_list" name="Daftar SPK" parent="menu_safago_spk_root" action="action_safago_spk"/>
+
+    <record id="view_safago_spk_tree" model="ir.ui.view">
+        <field name="name">safago.spk.tree</field>
+        <field name="model">safago.spk</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="roll_kain_id"/>
+                <field name="tanggal_mulai"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'selesai'"/>
+                <field name="jumlah_pemakaian_yard"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_safago_spk_form" model="ir.ui.view">
+        <field name="name">safago.spk.form</field>
+        <field name="model">safago.spk</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_mulai_produksi" string="Mulai Produksi" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_selesai_produksi" string="Selesaikan Produksi" type="object" class="oe_highlight" invisible="state != 'proses'"/>
+                    <button name="action_batal_produksi" string="Batalkan" type="object" class="oe_highlight" invisible="state != 'proses'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="roll_kain_id"/>
+                        <field name="tanggal_mulai"/>
+                        <field name="state"/>
+                        <field name="jumlah_pemakaian_yard" readonly="state != 'draft'"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>
