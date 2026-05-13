@@ -60,11 +60,13 @@ class SafagoRollKain(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        bot_username = "safago_notif_bot"
         for vals in vals_list:
             seq = self.env['ir.sequence'].next_by_code('safago.roll.kain.barcode')
+            deep_link = f"https://t.me/{bot_username}?start=scan_{seq}"
             vals['name'] = seq
             vals['barcode_value'] = seq
-            vals['qr_code_image'] = self._build_qr_image(seq)
+            vals['qr_code_image'] = self._build_qr_image(deep_link)
         return super().create(vals_list)
 
     def action_save_and_reload(self):

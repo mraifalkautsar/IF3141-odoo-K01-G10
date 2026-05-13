@@ -12,7 +12,14 @@ def send_welcome(message):
     # Baris ini akan mencetak ID grup secara langsung ke terminal Anda
     print(f"BINGO! ID Obrolan ruangan ini adalah: {message.chat.id}")
     
-    bot.reply_to(message, "Sistem SAFAGO siap. Silakan pindai QR Code atau ketik ID Roll Kain (contoh: RK-001) untuk memulai produksi.")
+    teks = message.text.strip()
+    
+    # Cek apakah ini hasil link scan dari QR
+    if teks.startswith('/start scan_'):
+        barcode_value = teks.replace('/start scan_', '').strip()
+        proses_barcode(message, barcode_value)
+    else:
+        bot.reply_to(message, "Sistem SAFAGO siap. Silakan pindai QR Code atau ketik barcode_value untuk memulai produksi.")
 
 @bot.message_handler(commands=['selesai'])
 def proses_selesai_produksi(message):
@@ -62,44 +69,44 @@ def proses_selesai_produksi(message):
     except Exception as e:
         bot.reply_to(message, f"Gagal terhubung atau sistem bot mengalami eror: {e}") 
 
-@bot.message_handler(func=lambda message: True)
-def proses_scan_qr(message):
-    id_roll_kain = message.text.strip()
-    bot.reply_to(message, f"Memproses pemotongan stok untuk {id_roll_kain} ke server Odoo...")
+def proses_barcode(message, barcode_value):
+    bot.reply_to(message, f"Memproses pemotongan stok untuk {barcode_value}...")
     
     headers = {
         'Content-Type': 'application/json',
         'Authorization': os.getenv('TOKEN_API_ODOO')
     }
-    
     payload = {
         "params": {
-            "roll_kain_id": id_roll_kain
+            "barcode_value": barcode_value # jadinya gak cuma nampilin id roll kain aja tapi nampilin link/value dari barcode
         }
     }
     
     try:
         response = requests.post(os.getenv('URL_ODOO_MULAI_PRODUKSI'), json=payload, headers=headers)
-        
         try:
             data = response.json()
         except ValueError:
-            bot.reply_to(message, "Gagal: Peladen Odoo merespons dengan galat HTML. Harap RESTART kontainer web Odoo Anda sekarang juga.")
+            bot.reply_to(message, "Gagal: Server Odoo merespons dengan galat HTML.")
             return
         
         if 'result' in data:
             hasil = data['result']
-            pesan_balasan = hasil.get('pesan', 'Terjadi kesalahan tidak dikenal pada Odoo.')
+            pesan_balasan = hasil.get('pesan', 'Terjadi kesalahan tidak dikenal.')
         elif 'error' in data:
-            pesan_balasan = f"Eror Internal Odoo: {data['error'].get('message', 'Cek log server')}"
+            pesan_balasan = f"Error Odoo: {data['error'].get('message', 'Cek log server')}"
         else:
-            pesan_balasan = "Error: Format balasan dari Odoo tidak sesuai."
+            pesan_balasan = "Error: Format balasan tidak sesuai."
             
         bot.reply_to(message, pesan_balasan)
         
     except Exception as e:
-        bot.reply_to(message, f"Gagal terhubung atau sistem bot mengalami eror: {e}")
+        bot.reply_to(message, f"Gagal terhubung: {e}")
 
+@bot.message_handler(func=lambda message: True)
+def proses_scan_qr(message):
+    barcode_value = message.text.strip()
+    proses_barcode(message, barcode_value)
 
 print("Bot Telegram SAFAGO sedang berjalan dan siap menerima pindaian...")
 bot.infinity_polling()

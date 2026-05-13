@@ -10,11 +10,15 @@ class SafagoTelegramAPI(http.Controller):
         if not token_asli or token_dikirim != token_asli:
             return {'status': 'error', 'pesan': 'Akses ditolak: Token tidak valid!'}
         
-        kode_roll = kwargs.get('roll_kain_id')
-        
+        kode_roll = kwargs.get('barcode_value', '')
+
+        # Ekstrak ID roll dari deep link kalau formatnya URL
+        if 'scan_' in kode_roll:
+            kode_roll = kode_roll.split('scan_')[-1]
+
         spk_ditemukan = request.env['safago.spk'].sudo().search([
-            ('state', '=', 'draft'), 
-            ('roll_kain_id.name', '=', kode_roll)
+            ('state', '=', 'draft'),
+            ('roll_kain_id.name', '=', kode_roll)  # cari by name, bukan barcode_value
         ])
         
         if spk_ditemukan:

@@ -16,6 +16,27 @@ class SafagoSpk(models.Model):
         ('batal', 'Dibatalkan')
     ], string='Status', default='draft')
 
+    started_at = fields.Datetime(readonly=True, copy=False)
+    finished_at = fields.Datetime(readonly=True, copy=False)
+    started_by_scan = fields.Boolean(default=False, copy=False)
+    finished_by_scan = fields.Boolean(default=False, copy=False)
+
+    def action_mulai_produksi_from_scan(self):
+        for record in self:
+            record.action_mulai_produksi()
+            record.write({
+                'started_at': fields.Datetime.now(),
+                'started_by_scan': True,
+            })
+
+    def action_selesai_produksi_from_scan(self):
+        for record in self:
+            record.action_selesai_produksi()
+            record.write({
+                'finished_at': fields.Datetime.now(),
+                'finished_by_scan': True,
+            })
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
