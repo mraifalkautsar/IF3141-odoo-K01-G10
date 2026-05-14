@@ -19,6 +19,12 @@ class SafagoRollKain(models.Model):
     jenis_kain = fields.Char(string='Jenis Kain', required=True)
     warna = fields.Char(string='Warna', required=True)
     sisa_stok_yard = fields.Float(string='Sisa Stok (Yard)', default=0.0)
+    quality_state = fields.Selection([
+        ('normal', 'Normal'),
+        ('cacat_review', 'Cacat/Review'),
+        ('layak_pakai', 'Layak Pakai'),
+        ('reject', 'Reject'),
+    ], string='Status Kualitas', default='normal', required=True)
 
     barcode_value = fields.Char(
         string='Barcode/QR Value',

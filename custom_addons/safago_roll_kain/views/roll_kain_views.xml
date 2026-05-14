@@ -9,6 +9,7 @@
                 <field name="jenis_kain"/>
                 <field name="warna"/>
                 <field name="sisa_stok_yard"/>
+                <field name="quality_state" widget="badge" decoration-warning="quality_state == 'cacat_review'" decoration-success="quality_state == 'layak_pakai'" decoration-danger="quality_state == 'reject'"/>
             </tree>
         </field>
     </record>
@@ -32,6 +33,7 @@
                                 <field name="jenis_kain"/>
                                 <field name="warna"/>
                                 <field name="sisa_stok_yard"/>
+                                <field name="quality_state" readonly="1"/>
                             </group>
                         </div>
                         <div style="flex:0 0 auto; text-align:center;" invisible="name == 'New'">

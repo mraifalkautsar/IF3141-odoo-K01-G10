@@ -55,6 +55,9 @@ class TestSafagoKainCacat(TransactionCase):
             second = self._create_report(jumlah_cacat_yard=1.0)
 
         self.assertEqual(self.spk_roll.sisa_stok_yard, 17.0)
+        self.assertEqual(first.state, 'baru')
+        self.assertEqual(self.spk.state, 'cacat_review')
+        self.assertEqual(self.spk_roll.quality_state, 'cacat_review')
         self.assertNotEqual(first.name, 'New')
         self.assertNotEqual(second.name, 'New')
         self.assertNotEqual(first.name, second.name)
@@ -86,6 +89,67 @@ class TestSafagoKainCacat(TransactionCase):
 
         self.assertTrue(report.exists())
         self.assertEqual(self.spk_roll.sisa_stok_yard, 18.0)
+
+    def test_qc_can_continue_to_cutting(self):
+        with patch.object(type(self.report_model), '_send_telegram_notification', return_value=None):
+            report = self._create_report()
+
+        report.action_mulai_review_qc()
+        report.action_lanjutkan_cutting()
+
+        self.assertEqual(report.state, 'lanjut_cutting')
+        self.assertEqual(report.keputusan_qc, 'layak_pakai')
+        self.assertTrue(report.verified_by)
+        self.assertTrue(report.verified_at)
+        self.assertEqual(self.spk.state, 'cutting')
+        self.assertEqual(self.spk_roll.quality_state, 'layak_pakai')
+
+    def test_revisi_spk_requires_manager_approval_before_draft(self):
+        qc_group = self.env.ref('safago_qc.group_safago_qc_user')
+        manager_group = self.env.ref('safago_qc.group_safago_qc_manager')
+        qc_user = self.env['res.users'].create({
+            'name': 'QC Workflow User',
+            'login': 'qc_workflow_user_test',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, qc_group.id])],
+        })
+        manager_user = self.env['res.users'].create({
+            'name': 'QC Workflow Manager',
+            'login': 'qc_workflow_manager_test',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, manager_group.id])],
+        })
+
+        with patch.object(type(self.report_model), '_send_telegram_notification', return_value=None):
+            report = self._create_report()
+
+        report.with_user(qc_user).action_ajukan_revisi_spk()
+        self.assertEqual(report.state, 'revisi_spk')
+        self.assertEqual(report.keputusan_qc, 'kerusakan_fatal')
+        self.assertEqual(self.spk.state, 'cacat_review')
+        self.assertEqual(self.spk_roll.quality_state, 'reject')
+
+        with self.assertRaises(ValidationError):
+            report.with_user(qc_user).action_approve_revisi_spk()
+
+        report.with_user(manager_user).action_approve_revisi_spk()
+        self.assertEqual(self.spk.state, 'draft')
+
+    def test_reject_report_requires_note_and_restores_stock(self):
+        with patch.object(type(self.report_model), '_send_telegram_notification', return_value=None):
+            report = self._create_report(jumlah_cacat_yard=3.0)
+
+        self.assertEqual(self.spk_roll.sisa_stok_yard, 17.0)
+        with self.assertRaises(ValidationError):
+            report.action_tolak_laporan()
+
+        report.write({'catatan_tindak_lanjut': 'Laporan salah input.'})
+        report.action_tolak_laporan()
+
+        self.assertEqual(report.state, 'ditolak')
+        self.assertEqual(report.keputusan_qc, 'laporan_salah')
+        self.assertFalse(report.defect_stock_applied)
+        self.assertEqual(self.spk_roll.sisa_stok_yard, 20.0)
+        self.assertEqual(self.spk_roll.quality_state, 'normal')
+        self.assertEqual(self.spk.state, 'proses')
 
     def test_qc_user_cannot_unlink_but_manager_can(self):
         qc_group = self.env.ref('safago_qc.group_safago_qc_user')

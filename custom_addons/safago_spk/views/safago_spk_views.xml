@@ -18,7 +18,7 @@
                 <field name="roll_kain_id"/>
                 <field name="tanggal_mulai"/>
                 <field name="deadline_selesai"/>
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'selesai'"/>
+                <field name="state" widget="badge" decoration-info="state in ('draft', 'aktif')" decoration-warning="state in ('cacat_review', 'qc_reject')" decoration-success="state == 'selesai'"/>
                 <field name="is_overdue"/>
                 <field name="jumlah_pemakaian_yard"/>
             </tree>
@@ -32,8 +32,8 @@
             <form>
                 <header>
                     <button name="action_mulai_produksi" string="Mulai Produksi" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_selesai_produksi" string="Selesaikan Produksi" type="object" class="oe_highlight" invisible="state != 'proses'"/>
-                    <button name="action_batal_produksi" string="Batalkan" type="object" class="oe_highlight" invisible="state != 'proses'"/>
+                    <button name="action_selesai_produksi" string="Selesaikan Produksi" type="object" class="oe_highlight" invisible="state not in ('proses', 'cutting', 'menunggu_qc', 'validasi_qc')"/>
+                    <button name="action_batal_produksi" string="Batalkan" type="object" class="oe_highlight" invisible="state not in ('proses', 'cacat_review', 'cutting', 'menunggu_qc', 'validasi_qc', 'qc_reject')"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>

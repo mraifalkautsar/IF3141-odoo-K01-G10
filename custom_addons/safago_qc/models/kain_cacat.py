@@ -11,6 +11,8 @@ _logger = logging.getLogger(__name__)
 class SafagoKainCacat(models.Model):
     _name = 'safago.kain.cacat'
     _description = 'Laporan Kain Cacat'
+    ACTIVE_SPK_STATES = ('proses', 'cacat_review', 'cutting')
+    OPEN_REVIEW_STATES = ('baru', 'review_qc', 'revisi_spk')
 
     name = fields.Char(string='Nomor Laporan', required=True, default='New')
     spk_id = fields.Many2one('safago.spk', string='Referensi SPK', required=True)
@@ -19,12 +21,29 @@ class SafagoKainCacat(models.Model):
     jumlah_cacat_yard = fields.Float(string='Jumlah Cacat (Yard)', required=True)
     alasan = fields.Text(string='Deskripsi Kerusakan')
     foto_cacat = fields.Binary(string='Foto Bukti Cacat')
+    state = fields.Selection([
+        ('baru', 'Baru'),
+        ('review_qc', 'Review QC'),
+        ('lanjut_cutting', 'Lanjut Cutting'),
+        ('revisi_spk', 'Revisi SPK'),
+        ('selesai', 'Selesai'),
+        ('ditolak', 'Ditolak'),
+    ], string='Status Tindak Lanjut', default='baru', required=True, copy=False)
+    keputusan_qc = fields.Selection([
+        ('layak_pakai', 'Sisa Kain Layak Pakai'),
+        ('kerusakan_fatal', 'Kerusakan Fatal'),
+        ('laporan_salah', 'Laporan Salah Input'),
+    ], string='Keputusan QC', copy=False)
+    catatan_tindak_lanjut = fields.Text(string='Catatan Tindak Lanjut', copy=False)
+    verified_by = fields.Many2one('res.users', string='Diverifikasi Oleh', readonly=True, copy=False)
+    verified_at = fields.Datetime(string='Waktu Verifikasi', readonly=True, copy=False)
+    defect_stock_applied = fields.Boolean(default=False, readonly=True, copy=False)
 
     @api.constrains('jumlah_cacat_yard', 'roll_kain_id', 'spk_id')
     def _check_laporan_cacat(self):
         for record in self:
-            if record.spk_id and record.spk_id.state != 'proses':
-                raise ValidationError('Pelaporan kain cacat hanya dapat dilakukan pada SPK yang sedang dalam status "Proses".')
+            if record.spk_id and record.spk_id.state not in self.ACTIVE_SPK_STATES:
+                raise ValidationError('Pelaporan kain cacat hanya dapat dilakukan pada SPK yang sedang aktif diproses.')
             if record.jumlah_cacat_yard <= 0:
                 raise ValidationError('Jumlah cacat harus lebih besar dari 0 yard.')
             if record.spk_id and record.roll_kain_id and record.spk_id.roll_kain_id != record.roll_kain_id:
@@ -51,6 +70,8 @@ class SafagoKainCacat(models.Model):
 
             record = super(SafagoKainCacat, self).create([vals])
             record._apply_defect_stock_move(jumlah_cacat)
+            record.write({'defect_stock_applied': True})
+            record._mark_related_records_for_review()
             record._send_telegram_notification()
             records |= record
 
@@ -75,12 +96,14 @@ class SafagoKainCacat(models.Model):
         if stock_fields_changed:
             available_adjustment = old_jumlah if old_roll == new_roll else 0.0
             self._validate_defect_stock(new_roll, new_jumlah, available_adjustment=available_adjustment)
-            self._apply_defect_stock_move(-old_jumlah, roll=old_roll)
+            if self.defect_stock_applied:
+                self._apply_defect_stock_move(-old_jumlah, roll=old_roll)
 
         result = super().write(vals)
 
         if stock_fields_changed:
             self._apply_defect_stock_move(self.jumlah_cacat_yard)
+            self.write({'defect_stock_applied': True})
 
         return result
 
@@ -89,7 +112,8 @@ class SafagoKainCacat(models.Model):
         self.check_access_rule('unlink')
 
         for record in self:
-            record._apply_defect_stock_move(-record.jumlah_cacat_yard)
+            if record.defect_stock_applied:
+                record._apply_defect_stock_move(-record.jumlah_cacat_yard)
         return super().unlink()
 
     def _validate_defect_stock(self, roll, jumlah_cacat, available_adjustment=0.0):
@@ -114,6 +138,85 @@ class SafagoKainCacat(models.Model):
             return
         target_roll.sudo().write({'sisa_stok_yard': target_roll.sisa_stok_yard - quantity})
 
+    def _mark_related_records_for_review(self):
+        for record in self:
+            if record.spk_id and record.spk_id.state in ('proses', 'cutting'):
+                record.spk_id.sudo().write({'state': 'cacat_review'})
+            if record.roll_kain_id:
+                record.roll_kain_id.sudo().write({'quality_state': 'cacat_review'})
+
+    def _set_verified_metadata(self):
+        self.write({
+            'verified_by': self.env.user.id,
+            'verified_at': fields.Datetime.now(),
+        })
+
+    def _has_open_defect_reviews(self):
+        self.ensure_one()
+        return bool(self.search_count([
+            ('id', '!=', self.id),
+            ('roll_kain_id', '=', self.roll_kain_id.id),
+            ('state', 'in', self.OPEN_REVIEW_STATES),
+        ]))
+
+    def action_mulai_review_qc(self):
+        for record in self:
+            if record.state == 'baru':
+                record.write({'state': 'review_qc'})
+
+    def action_lanjutkan_cutting(self):
+        for record in self:
+            if record.state not in ('baru', 'review_qc'):
+                continue
+            record.write({
+                'state': 'lanjut_cutting',
+                'keputusan_qc': 'layak_pakai',
+            })
+            record._set_verified_metadata()
+            record.roll_kain_id.sudo().write({'quality_state': 'layak_pakai'})
+            record.spk_id.sudo().write({'state': 'cutting'})
+
+    def action_ajukan_revisi_spk(self):
+        for record in self:
+            if record.state not in ('baru', 'review_qc'):
+                continue
+            record.write({
+                'state': 'revisi_spk',
+                'keputusan_qc': 'kerusakan_fatal',
+            })
+            record._set_verified_metadata()
+            record.roll_kain_id.sudo().write({'quality_state': 'reject'})
+            record.spk_id.sudo().write({'state': 'cacat_review'})
+
+    def action_approve_revisi_spk(self):
+        if not self.env.user.has_group('safago_qc.group_safago_qc_manager'):
+            raise ValidationError('Hanya QC Manager yang dapat menyetujui revisi SPK.')
+        for record in self:
+            if record.state == 'revisi_spk':
+                record.spk_id.sudo().write({'state': 'draft'})
+
+    def action_tolak_laporan(self):
+        for record in self:
+            if not record.catatan_tindak_lanjut:
+                raise ValidationError('Catatan tindak lanjut wajib diisi sebelum menolak laporan.')
+            if record.defect_stock_applied:
+                record._apply_defect_stock_move(-record.jumlah_cacat_yard)
+            record.write({
+                'state': 'ditolak',
+                'keputusan_qc': 'laporan_salah',
+                'defect_stock_applied': False,
+            })
+            record._set_verified_metadata()
+            if not record._has_open_defect_reviews():
+                record.roll_kain_id.sudo().write({'quality_state': 'normal'})
+                if record.spk_id.state == 'cacat_review':
+                    record.spk_id.sudo().write({'state': 'proses'})
+
+    def action_tandai_selesai(self):
+        for record in self:
+            if record.state in ('lanjut_cutting', 'revisi_spk', 'ditolak'):
+                record.write({'state': 'selesai'})
+
     def _send_telegram_notification(self):
         self.ensure_one()
         chat_id = os.getenv('SAFAGO_QC_REPORT_CHAT_ID')
@@ -129,6 +232,7 @@ class SafagoKainCacat(models.Model):
             f"*Ref SPK:* {self.spk_id.name}\n"
             f"*Jumlah Cacat:* {self.jumlah_cacat_yard} Yard\n"
             f"*Pemeriksa:* {self.staf_id.name}\n"
+            f"*Status:* Menunggu Review QC\n"
             f"*Alasan:* {self.alasan or '-'}"
         )
 
