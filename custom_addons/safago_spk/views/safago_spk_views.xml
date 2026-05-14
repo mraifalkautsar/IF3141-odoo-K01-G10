@@ -7,7 +7,7 @@
     </record>
 
     <menuitem id="menu_safago_spk_root" name="SPK SAFAGO" sequence="10"/>
-    <menuitem id="menu_safago_spk_list" name="Daftar SPK" parent="menu_safago_spk_root" action="action_safago_spk"/>
+    <menuitem id="menu_safago_spk_list" name="Daftar SPK" parent="menu_safago_spk_root" action="action_safago_spk" sequence="10"/>
 
     <record id="view_safago_spk_tree" model="ir.ui.view">
         <field name="name">safago.spk.tree</field>

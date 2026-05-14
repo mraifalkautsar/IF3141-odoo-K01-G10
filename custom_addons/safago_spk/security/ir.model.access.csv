@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_safago_spk_user,safago.spk.user,model_safago_spk,base.group_user,1,0,0,0
 access_safago_spk_manager,safago.spk.manager,model_safago_spk,base.group_system,1,1,1,1
+access_safago_spk_dashboard_viewer,safago.spk.dashboard.viewer,model_safago_spk_dashboard,safago_spk.group_safago_dashboard_viewer,1,0,0,0
