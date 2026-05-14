@@ -12,4 +12,14 @@
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         <field name="users" eval="[(4, ref('base.user_admin'))]"/>
     </record>
+
+    <record id="access_safago_spk_dashboard_viewer" model="ir.model.access">
+        <field name="name">safago.spk.dashboard.viewer</field>
+        <field name="model_id" ref="model_safago_spk_dashboard"/>
+        <field name="group_id" ref="safago_spk.group_safago_dashboard_viewer"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
 </odoo>
