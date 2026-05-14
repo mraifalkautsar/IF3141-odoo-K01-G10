@@ -1,6 +1,9 @@
 import logging
 import os
 from datetime import datetime, time, timedelta
+import base64
+import io
+import qrcode
 
 import requests
 
@@ -40,6 +43,8 @@ class SafagoSpk(models.Model):
     overdue_hours = fields.Float(compute='_compute_overdue_status', store=True)
     last_alert_at = fields.Datetime(readonly=True, copy=False)
     alert_count = fields.Integer(default=0, readonly=True, copy=False)
+    qr_spk_value = fields.Char(string='QR SPK Value', readonly=True, copy=False)
+    qr_spk_image = fields.Binary(string='QR SPK', readonly=True, copy=False)
 
     def action_mulai_produksi_from_scan(self):
         for record in self:
@@ -72,8 +77,14 @@ class SafagoSpk(models.Model):
             record.roll_kain_id.sudo().write({'sisa_stok_yard': sisa_baru})
 
     def action_selesai_produksi(self):
+        bot_username = "safago_notif_bot"
         for record in self:
-            record.write({'state' : 'menunggu_qc'})
+            deep_link = f"https://t.me/{bot_username}?start=qc_{record.name}"
+            record.write({
+                'state': 'menunggu_qc',
+                'qr_spk_value': deep_link,
+                'qr_spk_image': self._build_qr_image(deep_link),
+            })
             record._mark_alert_resolved()
 
     def action_batal_produksi(self):
@@ -202,3 +213,18 @@ class SafagoSpk(models.Model):
             'last_alert_at': False,
             'alert_count': 0,
         })
+    
+    @staticmethod
+    def _build_qr_image(value):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(value)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color='black', back_color='white')
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        return base64.b64encode(buffer.getvalue())

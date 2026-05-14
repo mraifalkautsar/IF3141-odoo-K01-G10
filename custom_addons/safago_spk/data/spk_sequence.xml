@@ -4,7 +4,7 @@
         <record id="seq_safago_spk" model="ir.sequence">
             <field name="name">Sequence Safago SPK</field>
             <field name="code">safago.spk.sequence</field>
-            <field name="prefix">SPK-%(y)s/%(month)s/</field>
+            <field name="prefix">SPK-%(y)s-%(month)s-</field>
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>
