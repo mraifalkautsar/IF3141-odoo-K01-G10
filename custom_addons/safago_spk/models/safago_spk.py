@@ -73,7 +73,7 @@ class SafagoSpk(models.Model):
 
     def action_selesai_produksi(self):
         for record in self:
-            record.write({'state' : 'selesai'})
+            record.write({'state' : 'menunggu_qc'})
             record._mark_alert_resolved()
 
     def action_batal_produksi(self):
@@ -123,7 +123,7 @@ class SafagoSpk(models.Model):
             record.overdue_hours = overdue_hours
 
     def cron_check_overdue_spk(self):
-        overdue_spk = self.search([('is_overdue', '=', True)])
+        overdue_spk = self.filtered('is_overdue') if self else self.search([('is_overdue', '=', True)])
         for record in overdue_spk:
             if record._should_send_overdue_alert():
                 if record._send_overdue_telegram_alert():

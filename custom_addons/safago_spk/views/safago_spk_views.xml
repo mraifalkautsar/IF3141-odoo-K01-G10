@@ -32,7 +32,7 @@
             <form>
                 <header>
                     <button name="action_mulai_produksi" string="Mulai Produksi" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_selesai_produksi" string="Selesaikan Produksi" type="object" class="oe_highlight" invisible="state not in ('proses', 'cutting', 'menunggu_qc', 'validasi_qc')"/>
+                    <button name="action_selesai_produksi" string="Selesaikan Produksi" type="object" class="oe_highlight" invisible="state not in ('proses', 'cutting')"/>
                     <button name="action_batal_produksi" string="Batalkan" type="object" class="oe_highlight" invisible="state not in ('proses', 'cacat_review', 'cutting', 'menunggu_qc', 'validasi_qc', 'qc_reject')"/>
                     <field name="state" widget="statusbar"/>
                 </header>

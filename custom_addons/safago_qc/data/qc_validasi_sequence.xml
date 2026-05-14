@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_safago_qc_validasi" model="ir.sequence">
+        <field name="name">SAFAGO Validasi QC</field>
+        <field name="code">safago.qc.validasi</field>
+        <field name="prefix">VQC/%(year)s/</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>
