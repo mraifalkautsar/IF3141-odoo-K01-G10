@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 import requests
 
@@ -88,6 +88,17 @@ class SafagoSpk(models.Model):
             roll = record.roll_kain_id
             if roll and record.jumlah_pemakaian_yard > roll.sisa_stok_yard:
                 raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
+
+    @api.constrains('tanggal_mulai', 'deadline_selesai')
+    def _check_deadline_after_tanggal_mulai(self):
+        for record in self:
+            if not record.tanggal_mulai or not record.deadline_selesai:
+                continue
+
+            tanggal_mulai_dt = datetime.combine(record.tanggal_mulai, time.min)
+            deadline_dt = fields.Datetime.to_datetime(record.deadline_selesai)
+            if deadline_dt <= tanggal_mulai_dt:
+                raise ValidationError('Deadline selesai harus lebih lambat dari tanggal mulai.')
 
     def action_confirm(self):
         res = super(SafagoSpk, self).action_confirm()
