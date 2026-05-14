@@ -138,7 +138,7 @@ class SafagoSpk(models.Model):
         )
         chat_id = (
             self.env['ir.config_parameter'].sudo().get_param('safago_spk.telegram_chat_id')
-            or os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
+            or os.getenv('SAFAGO_QC_REPORT_CHAT_ID')
         )
         token = token.strip() if token else ''
         chat_id = str(chat_id).strip() if chat_id else ''

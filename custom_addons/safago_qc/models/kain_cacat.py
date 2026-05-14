@@ -116,7 +116,7 @@ class SafagoKainCacat(models.Model):
 
     def _send_telegram_notification(self):
         self.ensure_one()
-        chat_id = os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
+        chat_id = os.getenv('SAFAGO_QC_REPORT_CHAT_ID')
         
         if not chat_id:
             _logger.info('Chat ID Telegram SAFAGO QC belum dikonfigurasi.')
@@ -164,6 +164,12 @@ class SafagoKainCacat(models.Model):
                 response = requests.post(url, data=payload, files=files, timeout=timeout)
             else:
                 response = requests.post(url, json=payload, timeout=timeout)
+            if not response.ok:
+                _logger.warning(
+                    'Telegram QC mengembalikan HTTP %s: %s',
+                    response.status_code,
+                    response.text,
+                )
             response.raise_for_status()
         except requests.RequestException as error:
             _logger.warning('Gagal mengirim notifikasi Telegram QC: %s', error)
