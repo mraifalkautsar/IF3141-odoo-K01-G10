@@ -19,7 +19,13 @@ class SafagoSpk(models.Model):
     jumlah_pemakaian_yard = fields.Float(string='Jumlah Pemakaian Yard', default=0.0)
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('aktif', 'Aktif'),
         ('proses', 'Sedang Diproses'),
+        ('cacat_review', 'Cacat/Review'),
+        ('cutting', 'Cutting'),
+        ('menunggu_qc', 'Menunggu QC'),
+        ('validasi_qc', 'Validasi QC'),
+        ('qc_reject', 'QC Reject'),
         ('selesai', 'Selesai'),
         ('batal', 'Dibatalkan')
     ], string='Status', default='draft')
@@ -94,8 +100,8 @@ class SafagoSpk(models.Model):
 
     def write(self, vals):
         res = super(SafagoSpk, self).write(vals)
-        if self.state == 'proses':
-            for record in self:
+        for record in self:
+            if record.state in ('proses', 'cacat_review', 'cutting'):
                 roll = record.roll_kain_id
                 if roll and record.jumlah_pemakaian_yard > roll.sisa_stok_yard:
                     raise ValidationError('Jumlah pemakaian tidak boleh lebih besar dari sisa stok pada roll kain.')
@@ -107,7 +113,8 @@ class SafagoSpk(models.Model):
         for record in self:
             overdue = False
             overdue_hours = 0.0
-            if record.state == 'proses' and record.deadline_selesai and not record.finished_at:
+            active_states = ('aktif', 'proses', 'cacat_review', 'cutting', 'menunggu_qc', 'validasi_qc', 'qc_reject')
+            if record.state in active_states and record.deadline_selesai and not record.finished_at:
                 if now > record.deadline_selesai:
                     overdue = True
                     delta = now - record.deadline_selesai
@@ -138,7 +145,7 @@ class SafagoSpk(models.Model):
         )
         chat_id = (
             self.env['ir.config_parameter'].sudo().get_param('safago_spk.telegram_chat_id')
-            or os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
+            or os.getenv('SAFAGO_QC_REPORT_CHAT_ID')
         )
         token = token.strip() if token else ''
         chat_id = str(chat_id).strip() if chat_id else ''

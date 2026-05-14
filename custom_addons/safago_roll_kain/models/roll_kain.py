@@ -19,6 +19,12 @@ class SafagoRollKain(models.Model):
     jenis_kain = fields.Char(string='Jenis Kain', required=True)
     warna = fields.Char(string='Warna', required=True)
     sisa_stok_yard = fields.Float(string='Sisa Stok (Yard)', default=0.0)
+    quality_state = fields.Selection([
+        ('normal', 'Normal'),
+        ('cacat_review', 'Cacat/Review'),
+        ('layak_pakai', 'Layak Pakai'),
+        ('reject', 'Reject'),
+    ], string='Status Kualitas', default='normal', required=True)
 
     barcode_value = fields.Char(
         string='Barcode/QR Value',
@@ -62,11 +68,15 @@ class SafagoRollKain(models.Model):
     def create(self, vals_list):
         bot_username = "safago_notif_bot"
         for vals in vals_list:
-            seq = self.env['ir.sequence'].next_by_code('safago.roll.kain.barcode')
-            deep_link = f"https://t.me/{bot_username}?start=scan_{seq}"
-            vals['name'] = seq
-            vals['barcode_value'] = seq
-            vals['qr_code_image'] = self._build_qr_image(deep_link)
+            if vals.get('sisa_stok_yard', 0) <= 0:
+                raise ValidationError('Sisa stok awal roll kain harus lebih besar dari 0 yard.')
+            
+            if vals.get('name', 'New') == 'New':
+                seq = self.env['ir.sequence'].next_by_code('safago.roll.kain.barcode')
+                deep_link = f"https://t.me/{bot_username}?start=scan_{seq}"
+                vals['name'] = seq
+                vals['barcode_value'] = seq
+                vals['qr_code_image'] = self._build_qr_image(deep_link)
         return super().create(vals_list)
 
     def action_save_and_reload(self):

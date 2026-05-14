@@ -4,6 +4,15 @@
         <field name="model">safago.kain.cacat</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_mulai_review_qc" string="Mulai Review QC" type="object" class="oe_highlight" invisible="state != 'baru'"/>
+                    <button name="action_lanjutkan_cutting" string="Lanjutkan ke Cutting" type="object" class="oe_highlight" invisible="state not in ('baru', 'review_qc')"/>
+                    <button name="action_ajukan_revisi_spk" string="Ajukan Revisi SPK" type="object" invisible="state not in ('baru', 'review_qc')"/>
+                    <button name="action_approve_revisi_spk" string="Setujui Revisi SPK" type="object" groups="safago_qc.group_safago_qc_manager" invisible="state != 'revisi_spk'"/>
+                    <button name="action_tolak_laporan" string="Tolak Laporan" type="object" invisible="state not in ('baru', 'review_qc')"/>
+                    <button name="action_tandai_selesai" string="Tandai Selesai" type="object" invisible="state not in ('lanjut_cutting', 'revisi_spk', 'ditolak')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="baru,review_qc,lanjut_cutting,revisi_spk,selesai"/>
+                </header>
                 <sheet>
                     <field name="foto_cacat" widget="image" class="oe_avatar" options='{"preview_image": "foto_cacat"}'/>
                     <div class="oe_title">
@@ -19,10 +28,14 @@
                         <group>
                             <field name="staf_id"/>
                             <field name="jumlah_cacat_yard"/>
+                            <field name="keputusan_qc" readonly="1"/>
+                            <field name="verified_by" readonly="1"/>
+                            <field name="verified_at" readonly="1"/>
                         </group>
                     </group>
                     <group string="Informasi Tambahan">
                         <field name="alasan" placeholder="Jelaskan detail kerusakan di sini..."/>
+                        <field name="catatan_tindak_lanjut" placeholder="Isi catatan keputusan atau alasan penolakan di sini..."/>
                     </group>
                 </sheet>
             </form>
@@ -39,6 +52,8 @@
                 <field name="roll_kain_id"/>
                 <field name="jumlah_cacat_yard"/>
                 <field name="staf_id"/>
+                <field name="state" widget="badge"/>
+                <field name="keputusan_qc"/>
             </tree>
         </field>
     </record>
