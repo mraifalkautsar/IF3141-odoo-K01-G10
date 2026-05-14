@@ -5,7 +5,7 @@ from odoo import fields
 from odoo.tests.common import TransactionCase, tagged
 
 
-@tagged('post_install', '-at_install')
+@tagged('post_install', '-at_install', 'safago_spk')
 class TestSafagoSpkOverdueCron(TransactionCase):
 
     @classmethod
