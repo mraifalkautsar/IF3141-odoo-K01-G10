@@ -32,6 +32,10 @@ class SafagoKainCacat(models.Model):
                     f'Roll kain yang Anda pilih ({record.roll_kain_id.name}) tidak cocok dengan roll kain pada dokumen SPK ({record.spk_id.roll_kain_id.name}). '
                     'Silakan periksa kembali, Anda mungkin tidak sengaja memilih SPK yang sudah berstatus Selesai atau Dibatalkan.'
                 )
+    @api.onchange('spk_id')
+    def _onchange_spk_id_set_roll_kain(self):
+        for record in self:
+            record.roll_kain_id = record.spk_id.roll_kain_id if record.spk_id else False
             
     @api.model_create_multi
     def create(self, vals_list):
@@ -115,6 +119,7 @@ class SafagoKainCacat(models.Model):
         chat_id = os.getenv('SAFAGO_TELEGRAM_CHAT_ID')
         
         if not chat_id:
+            _logger.info('Chat ID Telegram SAFAGO QC belum dikonfigurasi.')
             return
 
         message = (
