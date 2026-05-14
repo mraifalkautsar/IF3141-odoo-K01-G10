@@ -7,7 +7,9 @@
         'security/safago_qc_security.xml',
         'security/ir.model.access.csv',
         'data/kain_cacat_sequence.xml',
+        'data/qc_validasi_sequence.xml',
         'views/kain_cacat_views.xml',
+        'views/qc_validasi_views.xml',
     ],
     'installable': True,
 }

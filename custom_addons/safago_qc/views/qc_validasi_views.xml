@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_safago_qc_validasi_tree" model="ir.ui.view">
+        <field name="name">safago.qc.validasi.tree</field>
+        <field name="model">safago.qc.validasi</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="spk_id"/>
+                <field name="staf_id"/>
+                <field name="hasil_qc" widget="badge"/>
+                <field name="qty_lolos"/>
+                <field name="qty_reject"/>
+                <field name="state" widget="badge"/>
+                <field name="sync_status" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_safago_qc_validasi_form" model="ir.ui.view">
+        <field name="name">safago.qc.validasi.form</field>
+        <field name="model">safago.qc.validasi</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_finalize" string="Finalisasi QC" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_retry_sync" string="Retry Accurate" type="object" invisible="state != 'final' or hasil_qc == 'reject'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,final"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="spk_id" readonly="state == 'final'"/>
+                            <field name="barcode_value" readonly="state == 'final'"/>
+                            <field name="staf_id" readonly="state == 'final'"/>
+                        </group>
+                        <group>
+                            <field name="hasil_qc" readonly="state == 'final'"/>
+                            <field name="qty_lolos" readonly="state == 'final'"/>
+                            <field name="qty_reject" readonly="state == 'final'"/>
+                            <field name="sync_status" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Catatan">
+                        <field name="catatan" readonly="state == 'final'"/>
+                    </group>
+                    <notebook>
+                        <page string="Log Accurate">
+                            <field name="sync_log_ids" readonly="1">
+                                <tree>
+                                    <field name="create_date"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="synced_at"/>
+                                    <field name="response_message"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="status"/>
+                                        <field name="synced_at"/>
+                                        <field name="payload"/>
+                                        <field name="response_message"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_safago_accurate_sync_log_tree" model="ir.ui.view">
+        <field name="name">safago.accurate.sync.log.tree</field>
+        <field name="model">safago.accurate.sync.log</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="validasi_id"/>
+                <field name="status" widget="badge"/>
+                <field name="synced_at"/>
+                <field name="response_message"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_safago_qc_validasi" model="ir.actions.act_window">
+        <field name="name">Validasi Barang Jadi</field>
+        <field name="res_model">safago.qc.validasi</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_safago_accurate_sync_log" model="ir.actions.act_window">
+        <field name="name">Log Sync Accurate</field>
+        <field name="res_model">safago.accurate.sync.log</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_qc_validasi"
+          name="Validasi Barang Jadi"
+          parent="menu_safago_qc_root"
+          action="action_safago_qc_validasi"
+          sequence="20"
+          groups="group_safago_qc_user,group_safago_qc_manager"/>
+
+    <menuitem id="menu_accurate_sync_log"
+          name="Log Sync Accurate"
+          parent="menu_safago_qc_root"
+          action="action_safago_accurate_sync_log"
+          sequence="30"
+          groups="group_safago_qc_manager"/>
+</odoo>

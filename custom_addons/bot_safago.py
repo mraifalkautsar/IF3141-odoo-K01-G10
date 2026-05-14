@@ -26,11 +26,80 @@ def proses_selesai_produksi(message):
     id_roll_lain = teks_mentah.replace('/selesai ', '').strip()
     kirim_selesai_produksi(message, id_roll_lain)
 
+@bot.message_handler(commands=['qc'])
+def proses_scan_qc_barang_jadi(message):
+    barcode_value = message.text.replace('/qc', '', 1).strip()
+    if not barcode_value:
+        bot.reply_to(message, "Format: /qc <kode_spk>")
+        return
+    kirim_scan_qc_barang_jadi(message, barcode_value)
+
+@bot.message_handler(commands=['qclolos'])
+def proses_qc_lolos(message):
+    parts = message.text.split(maxsplit=3)
+    if len(parts) < 3:
+        bot.reply_to(message, "Format: /qclolos <spk_id> <qty_lolos> [catatan]")
+        return
+    kirim_submit_validasi_qc(
+        message,
+        spk_id=parts[1],
+        hasil_qc='lolos',
+        qty_lolos=parts[2],
+        qty_reject=0,
+        catatan=parts[3] if len(parts) > 3 else '',
+    )
+
+@bot.message_handler(commands=['qcparsial'])
+def proses_qc_parsial(message):
+    parts = message.text.split(maxsplit=4)
+    if len(parts) < 4:
+        bot.reply_to(message, "Format: /qcparsial <spk_id> <qty_lolos> <qty_reject> [catatan]")
+        return
+    kirim_submit_validasi_qc(
+        message,
+        spk_id=parts[1],
+        hasil_qc='parsial',
+        qty_lolos=parts[2],
+        qty_reject=parts[3],
+        catatan=parts[4] if len(parts) > 4 else '',
+    )
+
+@bot.message_handler(commands=['qcreject'])
+def proses_qc_reject(message):
+    parts = message.text.split(maxsplit=3)
+    if len(parts) < 3:
+        bot.reply_to(message, "Format: /qcreject <spk_id> <qty_reject> [catatan]")
+        return
+    kirim_submit_validasi_qc(
+        message,
+        spk_id=parts[1],
+        hasil_qc='reject',
+        qty_lolos=0,
+        qty_reject=parts[2],
+        catatan=parts[3] if len(parts) > 3 else '',
+    )
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith('selesai_'))
 def handle_tombol_selesai(call):
     barcode_value = call.data.replace('selesai_', '')
     bot.answer_callback_query(call.id, "Memproses penyelesaian...")
     kirim_selesai_produksi(call.message, barcode_value)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('qc_'))
+def handle_tombol_qc(call):
+    data = call.data.split('_')
+    hasil_qc = data[1]
+    spk_id = data[2]
+    bot.answer_callback_query(call.id, "Instruksi QC disiapkan.")
+
+    if hasil_qc == 'lolos':
+        pesan = f"Balas dengan: /qclolos {spk_id} <qty_lolos> [catatan]"
+    elif hasil_qc == 'parsial':
+        pesan = f"Balas dengan: /qcparsial {spk_id} <qty_lolos> <qty_reject> [catatan]"
+    else:
+        pesan = f"Balas dengan: /qcreject {spk_id} <qty_reject> [catatan]"
+
+    bot.send_message(call.message.chat.id, pesan)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('pilihspk_'))
 def handle_pilih_spk(call):
@@ -111,6 +180,83 @@ def kirim_selesai_produksi(message, barcode_value):
             
     except Exception as e:
         bot.reply_to(message, f"Gagal terhubung atau sistem bot mengalami eror: {e}")
+
+def kirim_scan_qc_barang_jadi(message, barcode_value):
+    bot.reply_to(message, f"Mengecek SPK barang jadi {barcode_value} untuk QC...")
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': os.getenv('TOKEN_API_ODOO')
+    }
+    payload = {
+        "params": {
+            "barcode_value": barcode_value
+        }
+    }
+
+    try:
+        response = requests.post(os.getenv('URL_ODOO_QC_SCAN_BARANG_JADI'), json=payload, headers=headers)
+        data = response.json()
+        hasil = data.get('result') or {}
+
+        if hasil.get('status') == 'sukses':
+            spk = hasil.get('spk', {})
+            spk_id = spk.get('id')
+            markup = InlineKeyboardMarkup()
+            markup.add(
+                InlineKeyboardButton("Lolos", callback_data=f"qc_lolos_{spk_id}"),
+                InlineKeyboardButton("Parsial", callback_data=f"qc_parsial_{spk_id}"),
+                InlineKeyboardButton("Reject", callback_data=f"qc_reject_{spk_id}")
+            )
+            pesan = (
+                f"{hasil.get('pesan')}\n"
+                f"SPK: {spk.get('name')}\n"
+                f"Roll: {spk.get('roll_kain')}\n"
+                f"Status: {spk.get('state')}"
+            )
+            bot.reply_to(message, pesan, reply_markup=markup)
+        elif 'error' in data:
+            bot.reply_to(message, f"Error Odoo: {data['error'].get('message', 'Cek log server')}")
+        else:
+            bot.reply_to(message, hasil.get('pesan', 'Validasi QC ditolak oleh Odoo.'))
+    except Exception as e:
+        bot.reply_to(message, f"Gagal terhubung ke endpoint QC: {e}")
+
+def kirim_submit_validasi_qc(message, spk_id, hasil_qc, qty_lolos, qty_reject, catatan):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': os.getenv('TOKEN_API_ODOO')
+    }
+    payload = {
+        "params": {
+            "spk_id": spk_id,
+            "telegram_id": str(message.from_user.id),
+            "hasil_qc": hasil_qc,
+            "qty_lolos": qty_lolos,
+            "qty_reject": qty_reject,
+            "catatan": catatan,
+        }
+    }
+
+    try:
+        response = requests.post(os.getenv('URL_ODOO_QC_SUBMIT_VALIDASI'), json=payload, headers=headers)
+        data = response.json()
+        hasil = data.get('result') or {}
+
+        if hasil.get('status') == 'sukses':
+            pesan = (
+                f"{hasil.get('pesan')}\n"
+                f"Hasil QC: {hasil.get('hasil_qc')}\n"
+                f"Status SPK: {hasil.get('spk_state')}\n"
+                f"Sync Accurate: {hasil.get('sync_status')}"
+            )
+            bot.reply_to(message, pesan)
+        elif 'error' in data:
+            bot.reply_to(message, f"Error Odoo: {data['error'].get('message', 'Cek log server')}")
+        else:
+            bot.reply_to(message, hasil.get('pesan', 'Submit QC ditolak oleh Odoo.'))
+    except Exception as e:
+        bot.reply_to(message, f"Gagal submit validasi QC: {e}")
 
 def proses_barcode(message, barcode_value):
     bot.reply_to(message, f"Mengecek data untuk {barcode_value}...")

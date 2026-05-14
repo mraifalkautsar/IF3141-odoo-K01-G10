@@ -80,7 +80,7 @@ class SafagoTelegramAPI(http.Controller):
             kumpulan_nama_spk = ', '.join(spk_ditemukan.mapped('name'))
             return {
                 'status': 'sukses',
-                'pesan': f'Proses produksi SPK {kumpulan_nama_spk} selesai. Stok {kode_roll} berhasil diperbarui.'
+                'pesan': f'Proses produksi SPK {kumpulan_nama_spk} selesai. Status SPK masuk Menunggu QC.'
             }
                 
         return {
