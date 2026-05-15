@@ -176,11 +176,15 @@ class SafagoSpk(models.Model):
             _logger.info('Token/chat_id Telegram SPK belum dikonfigurasi.')
             return False
 
+        deadline_text = self._format_telegram_datetime(self.deadline_selesai)
+        tanggal_mulai_text = self._format_telegram_date(self.tanggal_mulai)
+
         message = (
             '*ALERT SPK TERLAMBAT*\n\n'
             f'*No. SPK:* {self.name}\n'
             f'*Roll Kain:* {self.roll_kain_id.display_name}\n'
-            f'*Deadline:* {self.deadline_selesai}\n'
+            f'*Tanggal Mulai:* {tanggal_mulai_text}\n'
+            f'*Deadline Selesai:* {deadline_text}\n'
             f'*Overdue:* {self.overdue_hours:.2f} jam'
         )
 
@@ -199,6 +203,19 @@ class SafagoSpk(models.Model):
             return False
 
         return True
+
+    def _format_telegram_datetime(self, value):
+        self.ensure_one()
+        if not value:
+            return '-'
+        localized = fields.Datetime.context_timestamp(self, value)
+        return localized.strftime('%d-%m-%Y %H:%M')
+
+    def _format_telegram_date(self, value):
+        self.ensure_one()
+        if not value:
+            return '-'
+        return value.strftime('%d-%m-%Y')
 
     def _mark_alert_sent(self):
         self.ensure_one()
