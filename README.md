@@ -1,6 +1,19 @@
 # SAFAGO Odoo - IF3141 K01 G10
 
-Repository ini berisi implementasi MVP SAFAGO untuk Milestone 4 IF3141 Sistem Informasi. Sistem berjalan di atas Docker Odoo 17 dengan modul kustom pada folder `custom_addons/`.
+Repository ini berisi implementasi MVP sistem informasi SAFAGO Odoo dari perusahaan SAFAGO untuk Milestone 4 IF3141 Sistem Informasi. Sistem berjalan di atas Docker Odoo 17 dengan modul kustom pada folder `custom_addons/`.
+
+Sistem Informasi SAFAGO merupakan solusi manajemen produksi terintegrasi yang dirancang untuk mengotomasi alur kerja dari lantai produksi hingga ke sistem akuntansi pusat. Dengan memanfaatkan Telegram Bot sebagai antarmuka input dan Odoo sebagai middleware pengolah data, sistem ini memungkinkan staf produksi melaporkan progres kerja dan cacat kain secara real-time hanya melalui pemindaian QR Code. Integrasi ini bertujuan untuk menghapus sekat informasi antar departemen dan menggantikan pencatatan manual yang rentan terhadap kesalahan manusia.
+
+Seluruh data produksi yang telah tervalidasi oleh staf QC melalui pemindaian barcode akan disinkronisasikan secara otomatis ke dalam sistem Accurate Enterprise melalui koneksi API. Hal ini menjamin akurasi saldo inventaris dan laporan stok barang jadi tanpa perlu input ulang di bagian administrasi. Dengan adanya sistem ini, manajemen dapat memantau visibilitas produksi harian, menghitung komisi penjahit dengan transparan, serta mendukung prinsip zero waste melalui pelacakan bahan baku yang lebih ketat.
+
+| NIM | Nama |
+| --- | --- |
+| 13523007 | Ranashahira Reztaputri |
+| 13523011 | Muhammad Ra'if Alkautsar |
+| 13523047 | Indah Novita Tangdililing |
+| 13523042 | Abdullah Farhan |
+| 13523014 | Nicholas Andhika Luca |
+
 
 ## Modul Kustom
 
@@ -207,4 +220,11 @@ Warning ini dari format Compose terbaru dan tidak mengganggu aplikasi. Boleh dia
 
 Implementasi saat ini adalah MVP Odoo internal form. Fitur Telegram chatbot berbasis QR, validasi barcode kamera, sinkronisasi Accurate, dashboard monitoring, dan early warning masih menjadi ruang lingkup lanjutan.
 
-sebelum push jalanin export_db.sh dulu ya ges
+## Kesimpulan dan Saran
+Sistem Manajemen Produksi Safago berhasil mengintegrasikan Telegram (sebagai input), Odoo (sebagai otak/middleware), dan Accurate (sebagai akuntansi final). Solusi ini efektif menghilangkan pencatatan manual, mempercepat validasi QC dengan barcode, dan memastikan stok inventaris tersinkronisasi secara otomatis. Dengan pelacakan cacat kain digital, sistem ini tidak hanya meningkatkan efisiensi kerja, tetapi juga mendukung komitmen perusahaan terhadap prinsip Zero Waste.
+
+Saran:
+1. Penguatan Infrastruktur: Pasang titik Wi-Fi stabil di area workshop untuk menjamin kelancaran bot Telegram tanpa bergantung pada sinyal seluler staf.
+2. Pelatihan Intensif: Lakukan sosialisasi langsung kepada penjahit untuk membangun kebiasaan scanning yang konsisten agar data WIP selalu akurat.
+3. Audit API Berkala: Lakukan pengecekan rutin pada koneksi API Odoo-Accurate guna mencegah penumpukan data yang gagal sinkron akibat gangguan teknis pihak ketiga.
+4. Pemanfaatan Data: Gunakan laporan cacat kain yang terkumpul sebagai bahan evaluasi tahunan untuk menyeleksi supplier kain yang lebih berkualitas.
